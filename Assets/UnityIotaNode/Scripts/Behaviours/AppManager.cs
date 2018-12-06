@@ -2,6 +2,8 @@
 using Unity.Entities;
 using uIota;
 using System.Collections;
+using System.Security.Cryptography;
+using System.Text;
 
 public class AppManager : MonoBehaviour
 {
@@ -9,12 +11,49 @@ public class AppManager : MonoBehaviour
     private EntityManager entityManager;
     //private IotaSystem iotaSystem;
 
-    public static EntityArchetype TransactionArchetype;
+    private SHA256 hasher = SHA256.Create();
+
+    //public static EntityArchetype TransactionArchetype;
+    public static EntityArchetype ValueTransactionArchetype;
+    public static EntityArchetype ZeroValueTransactionArchetype;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void Initialize()
     {
-        TransactionArchetype = World.Active.GetOrCreateManager<EntityManager>().CreateArchetype( typeof(Transaction));
+        //TransactionArchetype = World.Active.GetOrCreateManager<EntityManager>().CreateArchetype
+        //(
+        //    typeof(Hash),
+        //    typeof(SignatureMessageFragment),
+        //    typeof(Address),
+        //    //typeof(TransactionValue),
+        //    typeof(Bundle),
+        //    typeof(Trunk),
+        //    typeof(Branch),
+        //    typeof(Nonce)
+        //);
+
+        ValueTransactionArchetype = World.Active.GetOrCreateManager<EntityManager>().CreateArchetype
+        (
+            typeof(Hash),
+            typeof(SignatureMessageFragment),
+            typeof(Address),
+            typeof(TransactionValue),
+            typeof(Bundle),
+            typeof(Trunk),
+            typeof(Branch),
+            typeof(Nonce)
+        );
+
+        ZeroValueTransactionArchetype = World.Active.GetOrCreateManager<EntityManager>().CreateArchetype
+        (
+            typeof(Hash),
+            typeof(SignatureMessageFragment),
+            typeof(Address),
+            typeof(Bundle),
+            typeof(Trunk),
+            typeof(Branch),
+            typeof(Nonce)
+        );
     }
 
     private void Awake()
@@ -26,30 +65,51 @@ public class AppManager : MonoBehaviour
 
     private void OnEnable()
     {
-        StartCoroutine(CreateTransactions());
+        StartCoroutine(TransactionLoop());
     }
 
     private void OnDisable()
     {
-        StopCoroutine(CreateTransactions());
+        StopCoroutine(TransactionLoop());
     }
 
-    private IEnumerator CreateTransactions()
+    private IEnumerator TransactionLoop()
     {
         while(true)
         {
-            var entity = entityManager.CreateEntity(TransactionArchetype);
-            var transaction = new Transaction();
-
-            //var hash = new Hash();
-            //hash.Value = System.Guid.NewGuid().ToString();
-            //hash.Value = Random.Range(0, 1000000);
-
-            //transaction.Hash = hash;
-            //transaction.Hash = System.Guid.NewGuid().ToString();
-            transaction.Hash = Random.Range(0, 1000000);
-            entityManager.SetComponentData(entity, transaction);
+            CreateTransaction();
             yield return new WaitForSeconds(3f);
         }
     }
+
+    private void CreateTransaction()
+    {
+        var entity = entityManager.CreateEntity(ValueTransactionArchetype);
+        
+        var hashBytes = Encoding.UTF8.GetBytes("YT9CVQDZMIFXNAYXAPHIFGEMIEBVGXIZVPXCYFI9YSOJRVWKY9SNYPWNXQVHGLVZTFWMBLSWEIPVA9999");
+        var hashArray = new Hash[hashBytes.Length];
+        for (var i = 0; i < hashBytes.Length; i++)
+        {
+            hashArray[i].Value = hashBytes[i];
+        }
+        var hashBuffer = entityManager.GetBuffer<Hash>(entity);
+        hashBuffer.CopyFrom(hashArray);
+    }
+
+    private byte[] GetHash(string message)
+    {
+        return hasher.ComputeHash(Encoding.UTF8.GetBytes(message));
+    }
+
+    //private string GetString(byte[] data)
+    //{
+    //    var sBuilder = new StringBuilder();
+
+    //    for (int i = 0; i < data.Length; i++)
+    //    {
+    //        sBuilder.Append(data[i].ToString("x2"));
+    //    }
+
+    //    return sBuilder.ToString();
+    //}
 }
