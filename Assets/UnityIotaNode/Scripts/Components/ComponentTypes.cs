@@ -34,6 +34,8 @@ namespace uIota
     //    public string Value;
     //}
 
+    public struct Transaction : IComponentData { }
+
     public struct Hash : IBufferElementData
     {
         public byte Value;
@@ -47,6 +49,11 @@ namespace uIota
     public struct Address : IBufferElementData
     {
         public byte Value;
+    }
+
+    public struct IotaValue : IComponentData
+    {
+        public long Value;
     }
 
     public struct ObsoleteTag : IBufferElementData
@@ -79,11 +86,6 @@ namespace uIota
         public long TimeStamp;
         public long LowerBound;
         public long UpperBound;
-    }
-
-    public struct TransactionValue : IComponentData
-    {
-        public long Value;
     }
 
     public struct TransactionIndices : IComponentData
