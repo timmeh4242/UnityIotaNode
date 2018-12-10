@@ -19,6 +19,8 @@ public class AppManager : MonoBehaviour
     public static EntityArchetype ValueTransactionArchetype;
     public static EntityArchetype ZeroValueTransactionArchetype;
 
+    public static GameObject TransactionPrefab;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void Initialize()
     {
@@ -74,6 +76,8 @@ public class AppManager : MonoBehaviour
             typeof(Branch),
             typeof(Nonce)
         );
+
+        TransactionPrefab = Resources.Load<GameObject>("TransactionPrefab");
     }
 
     private void Awake()
@@ -97,7 +101,7 @@ public class AppManager : MonoBehaviour
     {
         while(true)
         {
-            var numberOfTx = Random.Range(0, 5);
+            var numberOfTx = Random.Range(1, 5);
             for (var i = 0; i < numberOfTx; i++)
             {
                 CreateTransaction();
@@ -134,6 +138,10 @@ public class AppManager : MonoBehaviour
         //buffer.Clear();
         //buffer.Reinterpret<Hash>().AddRange(hashBytes);
 
+        var timeStamps = new TimeStamps();
+        timeStamps.TimeStamp = (long)Time.realtimeSinceStartup;
+        EntityManager.AddComponent(entity, typeof(TimeStamps));
+        EntityManager.SetComponentData(entity, timeStamps);
         EntityManager.AddBuffer<Trunk>(entity);
         EntityManager.AddBuffer<Branch>(entity);
         return entity;

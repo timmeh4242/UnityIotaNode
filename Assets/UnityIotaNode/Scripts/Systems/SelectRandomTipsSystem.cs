@@ -14,13 +14,10 @@ namespace uIota
     {
         class Barrier : BarrierSystem { }
         [Inject] Barrier barrier;
-        struct Initialized : IComponentData { }
+        public struct Initialized : IComponentData { }
 
         ComponentGroup unprocessedTx;
         ComponentGroup processedTx;
-
-        NativeArray<Trunk> trunkArray;
-        NativeArray<Trunk> branchArray;
 
         protected override void OnCreateManager()
         {
@@ -34,6 +31,11 @@ namespace uIota
             { hashArray[i].Value = 9; }
             var hashBuffer = EntityManager.GetBuffer<Hash>(genesis);
             hashBuffer.CopyFrom(hashArray);
+
+            var timeStamps = new TimeStamps();
+            timeStamps.TimeStamp = (long)-1;
+            EntityManager.AddComponent(genesis, typeof(TimeStamps));
+            EntityManager.SetComponentData(genesis, timeStamps);
 
             EntityManager.AddBuffer<Trunk>(genesis);
             EntityManager.AddBuffer<Branch>(genesis);
