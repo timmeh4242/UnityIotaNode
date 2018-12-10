@@ -55,18 +55,18 @@ namespace uIota
             return sBuilder.ToString();
         }
 
-        private unsafe string GetString(byte* data)
-        {
-            var sBuilder = new StringBuilder();
+        //private unsafe string GetString(byte* data)
+        //{
+        //    var sBuilder = new StringBuilder();
 
-            //UnityEngine.Debug.Log(data.Length);
+        //    //UnityEngine.Debug.Log(data.Length);
 
-            //for (int i = 0; i < data.Length; i++)
-            //{
-            //    sBuilder.Append(data[i].ToString("x2"));
-            //}
+        //    //for (int i = 0; i < data.Length; i++)
+        //    //{
+        //    //    sBuilder.Append(data[i].ToString("x2"));
+        //    //}
 
-            return sBuilder.ToString();
-        }
+        //    return sBuilder.ToString();
+        //}
     }
 }
