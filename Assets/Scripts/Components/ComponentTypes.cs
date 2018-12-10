@@ -1,3 +1,3 @@
 ﻿using Unity.Entities;
 
-public struct Initialized : IComponentData { }
+//public struct Initialized : IComponentData { }

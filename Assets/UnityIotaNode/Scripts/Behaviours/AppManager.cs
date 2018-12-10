@@ -12,6 +12,7 @@ public class AppManager : MonoBehaviour
     //private IotaSystem iotaSystem;
 
     private SHA256 hasher = SHA256.Create();
+    private static char[] chars = new char[] { 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','9', };
 
     //public static EntityArchetype TransactionArchetype;
     public static EntityArchetype BaseTransactionArchetype;
@@ -21,6 +22,9 @@ public class AppManager : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void Initialize()
     {
+        World = World.Active;
+        EntityManager = World.GetOrCreateManager<EntityManager>();
+
         //TransactionArchetype = World.Active.GetOrCreateManager<EntityManager>().CreateArchetype
         //(
         //    typeof(Hash),
@@ -35,20 +39,20 @@ public class AppManager : MonoBehaviour
 
         BaseTransactionArchetype = World.Active.GetOrCreateManager<EntityManager>().CreateArchetype
         (
-            typeof(Transaction),
+            //typeof(Transaction),
             typeof(Hash),
             typeof(SignatureMessageFragment),
             typeof(Address),
             //typeof(TransactionValue),
             typeof(Bundle),
-            //typeof(Trunk),
-            //typeof(Branch),
+            typeof(Trunk),
+            typeof(Branch),
             typeof(Nonce)
         );
 
         ValueTransactionArchetype = World.Active.GetOrCreateManager<EntityManager>().CreateArchetype
         (
-            typeof(Transaction),
+            //typeof(Transaction),
             typeof(Hash),
             typeof(SignatureMessageFragment),
             typeof(Address),
@@ -61,7 +65,7 @@ public class AppManager : MonoBehaviour
 
         ZeroValueTransactionArchetype = World.Active.GetOrCreateManager<EntityManager>().CreateArchetype
         (
-            typeof(Transaction),
+            //typeof(Transaction),
             typeof(Hash),
             typeof(SignatureMessageFragment),
             typeof(Address),
@@ -74,8 +78,8 @@ public class AppManager : MonoBehaviour
 
     private void Awake()
     {
-        World = World.Active;
-        EntityManager = World.GetOrCreateManager<EntityManager>();
+        //World = World.Active;
+        //EntityManager = World.GetOrCreateManager<EntityManager>();
         //iotaSystem = world.GetExistingManager<IotaSystem>();
     }
 
@@ -93,7 +97,7 @@ public class AppManager : MonoBehaviour
     {
         while(true)
         {
-            var numberOfTx = Random.Range(0, 100);
+            var numberOfTx = Random.Range(0, 5);
             for (var i = 0; i < numberOfTx; i++)
             {
                 CreateTransaction();
@@ -102,15 +106,23 @@ public class AppManager : MonoBehaviour
         }
     }
 
-    private void CreateTransaction()
+    public static Entity CreateTransaction()
     {
         //var entity = EntityManager.CreateEntity(AppManager.BaseTransactionArchetype);
         var entity = EntityManager.CreateEntity();
-        EntityManager.AddComponent(entity, typeof(Transaction));
-        EntityManager.AddBuffer<Hash>(entity);
-        EntityManager.AddBuffer<Bundle>(entity);
 
-        var hashBytes = Encoding.UTF8.GetBytes("YT9CVQDZMIFXNAYXAPHIFGEMIEBVGXIZVPXCYFI9YSOJRVWKY9SNYPWNXQVHGLVZTFWMBLSWEIPVA9999");
+        EntityManager.AddBuffer<Hash>(entity);
+        byte[] hashBytes = new byte[81];
+        //NativeArray<Hash> hashBytes;
+        using (RNGCryptoServiceProvider crypto = new RNGCryptoServiceProvider())
+        {
+            crypto.GetBytes(hashBytes);
+        }
+        for (var i = 0; i < hashBytes.Length; i++)
+        {
+            hashBytes[i] = (byte)(hashBytes[i] % chars.Length);
+        }
+
         var hashArray = new Hash[hashBytes.Length];
         for (var i = 0; i < hashBytes.Length; i++)
         {
@@ -118,6 +130,13 @@ public class AppManager : MonoBehaviour
         }
         var hashBuffer = EntityManager.GetBuffer<Hash>(entity);
         hashBuffer.CopyFrom(hashArray);
+
+        //buffer.Clear();
+        //buffer.Reinterpret<Hash>().AddRange(hashBytes);
+
+        EntityManager.AddBuffer<Trunk>(entity);
+        EntityManager.AddBuffer<Branch>(entity);
+        return entity;
     }
 
     //private byte[] GetHash(string message)

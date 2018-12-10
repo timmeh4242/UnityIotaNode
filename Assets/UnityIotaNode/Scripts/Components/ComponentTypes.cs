@@ -34,7 +34,7 @@ namespace uIota
     //    public string Value;
     //}
 
-    public struct Transaction : IComponentData { }
+    //public struct Transaction : IComponentData { }
 
     public struct Hash : IBufferElementData
     {
@@ -71,12 +71,12 @@ namespace uIota
         public byte Value;
     }
 
-    public struct Trunk : ISharedComponentData
+    public struct Trunk : IBufferElementData
     {
         public byte Value;
     }
 
-    public struct Branch : ISharedComponentData
+    public struct Branch : IBufferElementData
     {
         public byte Value;
     }
