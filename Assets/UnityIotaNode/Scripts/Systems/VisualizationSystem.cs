@@ -21,7 +21,7 @@ namespace uIota
         {
             base.OnCreateManager();
 
-            addedTx = GetComponentGroup(typeof(TimeStamps), typeof(Hash), typeof(Trunk), typeof(Branch), ComponentType.Subtractive(typeof(Initialized)));
+            addedTx = GetComponentGroup(typeof(TimeStamps), typeof(Hash), typeof(Trunk), typeof(Branch),typeof(HasTips), ComponentType.Subtractive(typeof(Initialized)));
             removedTx = GetComponentGroup(typeof(TimeStamps), typeof(Initialized));
         }
 
@@ -57,7 +57,7 @@ namespace uIota
                     { hash += ((int)hashArray[k].Value).ToString(); }
                     go.name = hash;
 
-                    if (!hash.Contains("999"))
+                    if (hash != "999999999")
                     {
                         var trunk = "";
                         var trunkArray = trunks[j];
