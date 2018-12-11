@@ -35,6 +35,10 @@ namespace uIota
     //}
 
     //public struct Transaction : IComponentData { }
+    //TODO -> replace this with instead dynamically adding Trunk and Branch components...
+    //... however, we don't do this at the moment as there seem to be performance losses with AddComponent and RemoveComponent...
+    //... vs just transforming the data
+    public struct HasTips : IComponentData { }
 
     public struct Hash : IBufferElementData
     {

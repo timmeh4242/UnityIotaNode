@@ -14,7 +14,6 @@ namespace uIota
     {
         class Barrier : BarrierSystem { }
         [Inject] Barrier barrier;
-        public struct Initialized : IComponentData { }
 
         ComponentGroup unprocessedTx;
         ComponentGroup processedTx;
@@ -23,26 +22,8 @@ namespace uIota
         {
             base.OnCreateManager();
 
-            var genesis = EntityManager.CreateEntity();
-
-            EntityManager.AddBuffer<Hash>(genesis);
-            var hashArray = new Hash[9];
-            for (var i = 0; i < 9; i++)
-            { hashArray[i].Value = 9; }
-            var hashBuffer = EntityManager.GetBuffer<Hash>(genesis);
-            hashBuffer.CopyFrom(hashArray);
-
-            var timeStamps = new TimeStamps();
-            timeStamps.TimeStamp = (long)-1;
-            EntityManager.AddComponent(genesis, typeof(TimeStamps));
-            EntityManager.SetComponentData(genesis, timeStamps);
-
-            EntityManager.AddBuffer<Trunk>(genesis);
-            EntityManager.AddBuffer<Branch>(genesis);
-            EntityManager.AddComponent(genesis, typeof(Initialized));
-
-            unprocessedTx = GetComponentGroup(typeof(Trunk), typeof(Branch), ComponentType.Subtractive(typeof(Initialized)));
-            processedTx = GetComponentGroup(typeof(Trunk), typeof(Branch), typeof(Hash), typeof(Initialized));
+            unprocessedTx = GetComponentGroup(typeof(Trunk), typeof(Branch), ComponentType.Subtractive(typeof(HasTips)));
+            processedTx = GetComponentGroup(typeof(Trunk), typeof(Branch), typeof(Hash), typeof(HasTips));
         }
 
         [BurstCompile]
@@ -102,7 +83,7 @@ namespace uIota
             {
                 for(var i = 0; i < entities.Length; i++)
                 {
-                    entityCommandBuffer.AddComponent(i, entities[i], new Initialized());
+                    entityCommandBuffer.AddComponent(i, entities[i], new HasTips());
                 }
             }
         }
