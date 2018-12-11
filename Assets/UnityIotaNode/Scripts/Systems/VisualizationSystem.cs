@@ -36,7 +36,7 @@ public class VisualizationSystem : ComponentSystem
 
         var commandBuffer = barrier.CreateCommandBuffer();
 
-        var chunks = addedTx.CreateArchetypeChunkArray(Allocator.Temp);
+        var chunks = addedTx.CreateArchetypeChunkArray(Allocator.TempJob);
         for (var i = 0; i < chunks.Length; i++)
         {
             var chunk = chunks[i];
