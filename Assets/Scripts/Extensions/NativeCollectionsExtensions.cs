@@ -1,23 +1,23 @@
 ﻿using Unity.Entities;
 using Unity.Collections;
+using System;
 
 public static partial class NativeCollectionsExtensions
 {
-    public static bool TryGetValues(this NativeMultiHashMap<Entity, Entity> multiHashMap, Entity root, out NativeList<Entity> values, out NativeMultiHashMapIterator<Entity> iterator)
+    public static bool TryGetValues<TKey, TValue>(this NativeMultiHashMap<TKey, TValue> multiHashMap, TKey key, out NativeList<TValue> values, out NativeMultiHashMapIterator<TKey> iterator)
+        where TKey : struct, IEquatable<TKey> where TValue : struct
     {
-        values = new NativeList<Entity>(Allocator.Persistent);
-        Entity child;
-        if (!multiHashMap.TryGetFirstValue(root, out child, out iterator))
+        values = new NativeList<TValue>(Allocator.Persistent);
+        TValue value;
+        if (!multiHashMap.TryGetFirstValue(key, out value, out iterator))
         {
-            values.Add(root);
             return false;
         }
 
         do
         {
-            values.Add(child);
-        } while (multiHashMap.TryGetNextValue(out child, ref iterator));
-
+            values.Add(value);
+        } while (multiHashMap.TryGetNextValue(out value, ref iterator));
         return true;
     }
 }

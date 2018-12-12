@@ -84,7 +84,7 @@ namespace uIota
                             trunkParent = walkChildren[rnd.NextInt(0, walkChildren.Length)];
                             walkChildren.Dispose();
                         }
-                        trunkParent = walkChildren[rnd.NextInt(0, walkChildren.Length)];
+                        //trunkParent = walkChildren[rnd.NextInt(0, walkChildren.Length)];
                         walkChildren.Dispose();
                         var nextIndex = 0;
                         for(var j = 0; j < processedEntities.Length; j++)
@@ -103,7 +103,7 @@ namespace uIota
                             branchParent = walkChildren[rnd.NextInt(0, walkChildren.Length)];
                             walkChildren.Dispose();
                         }
-                        branchParent = walkChildren[rnd.NextInt(0, walkChildren.Length)];
+                        //branchParent = walkChildren[rnd.NextInt(0, walkChildren.Length)];
                         walkChildren.Dispose();
                         nextIndex = 0;
                         for (var j = 0; j < processedEntities.Length; j++)
