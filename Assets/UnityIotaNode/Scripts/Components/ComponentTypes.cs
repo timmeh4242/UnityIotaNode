@@ -40,6 +40,7 @@ namespace uIota
     //... vs just transforming the data
     public struct HasTips : IComponentData { }
 
+    [InternalBufferCapacity(81)]
     public struct Hash : IBufferElementData
     {
         public byte Value;
@@ -75,11 +76,13 @@ namespace uIota
         public byte Value;
     }
 
+    [InternalBufferCapacity(81)]
     public struct Trunk : IBufferElementData
     {
         public byte Value;
     }
 
+    [InternalBufferCapacity(81)]
     public struct Branch : IBufferElementData
     {
         public byte Value;
@@ -101,5 +104,10 @@ namespace uIota
     public struct Persistence : IComponentData
     {
         public bool Value;
+    }
+
+    public struct Weight : IComponentData
+    {
+        public int Value;
     }
 }

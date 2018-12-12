@@ -9,7 +9,7 @@ namespace uIota
         [Inject] Barrier barrier;
 
         ComponentGroup addedTx;
-        ComponentGroup removedTx;
+        //ComponentGroup removedTx;
 
         //ArchetypeChunkEntityType entityChunkType;
         //ArchetypeChunkBufferType<Hash> hashChunkType;
@@ -22,13 +22,20 @@ namespace uIota
             base.OnCreateManager();
 
             addedTx = GetComponentGroup(typeof(TimeStamps), typeof(Hash), typeof(Trunk), typeof(Branch),typeof(HasTips), ComponentType.Subtractive(typeof(Initialized)));
-            removedTx = GetComponentGroup(typeof(TimeStamps), typeof(Initialized));
+            //removedTx = GetComponentGroup(typeof(TimeStamps), typeof(Initialized));
         }
 
         struct Initialized : ISystemStateComponentData { }
 
         protected override void OnUpdate()
         {
+            var chunks = addedTx.CreateArchetypeChunkArray(Allocator.TempJob);
+            if(chunks.Length < 1)
+            {
+                chunks.Dispose();
+                return;
+            }
+
             var entityChunkType = GetArchetypeChunkEntityType();
             var hashChunkType = GetArchetypeChunkBufferType<Hash>();
             var trunkChunkType = GetArchetypeChunkBufferType<Trunk>();
@@ -37,7 +44,6 @@ namespace uIota
 
             var commandBuffer = barrier.CreateCommandBuffer();
 
-            var chunks = addedTx.CreateArchetypeChunkArray(Allocator.TempJob);
             for (var i = 0; i < chunks.Length; i++)
             {
                 var chunk = chunks[i];
@@ -89,10 +95,10 @@ namespace uIota
             }
             chunks.Dispose();
 
-            for (var i = 0; i < removedTx.GetEntityArray().Length; i++)
-            {
+            //for (var i = 0; i < removedTx.GetEntityArray().Length; i++)
+            //{
 
-            }
+            //}
         }
     }
 }

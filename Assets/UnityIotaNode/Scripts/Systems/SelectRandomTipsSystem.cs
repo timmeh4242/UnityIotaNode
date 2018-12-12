@@ -9,7 +9,7 @@ using System;
 
 namespace uIota
 {
-    //[DisableAutoCreation]
+    [DisableAutoCreation]
     public class SelectRandomTipsSystem : JobComponentSystem
     {
         class Barrier : BarrierSystem { }

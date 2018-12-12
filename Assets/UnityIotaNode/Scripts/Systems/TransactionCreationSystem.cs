@@ -34,6 +34,8 @@ namespace uIota
 
             EntityManager.AddBuffer<Trunk>(genesis);
             EntityManager.AddBuffer<Branch>(genesis);
+            EntityManager.AddComponent(genesis, typeof(Weight));
+            EntityManager.SetComponentData(genesis, new Weight() { Value = 1 });
             EntityManager.AddComponent(genesis, typeof(HasTips));
 
             transactions = GetComponentGroup(typeof(Hash));
@@ -87,6 +89,10 @@ namespace uIota
             timeStamps.TimeStamp = (long)UnityEngine.Time.realtimeSinceStartup;
             EntityManager.AddComponent(entity, typeof(TimeStamps));
             EntityManager.SetComponentData(entity, timeStamps);
+
+            EntityManager.AddComponent(entity, typeof(Weight));
+            EntityManager.SetComponentData(entity, new Weight() { Value = 1 });
+
             EntityManager.AddBuffer<Trunk>(entity);
             EntityManager.AddBuffer<Branch>(entity);
             return entity;
