@@ -76,16 +76,26 @@ namespace uIota
         public byte Value;
     }
 
-    [InternalBufferCapacity(81)]
-    public struct Trunk : IBufferElementData
+    //[InternalBufferCapacity(81)]
+    //public struct Trunk : IBufferElementData
+    //{
+    //    public byte Value;
+    //}
+
+    public struct Trunk : IComponentData
     {
-        public byte Value;
+        public Entity Value;
     }
 
-    [InternalBufferCapacity(81)]
-    public struct Branch : IBufferElementData
+    //[InternalBufferCapacity(81)]
+    //public struct Branch : IBufferElementData
+    //{
+    //    public byte Value;
+    //}
+
+    public struct Branch : IComponentData
     {
-        public byte Value;
+        public Entity Value;
     }
 
     public struct TimeStamps : IComponentData

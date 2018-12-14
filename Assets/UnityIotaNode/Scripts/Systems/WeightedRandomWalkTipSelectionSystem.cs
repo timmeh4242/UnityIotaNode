@@ -15,14 +15,12 @@ namespace uIota
         ComponentGroup processedTx;
 
         NativeMultiHashMap<Entity, Entity> parentToChildTree;
-        //NativeHashMap<Entity, NativeList<Entity>> parentToChildTree;
 
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
 
             parentToChildTree = new NativeMultiHashMap<Entity, Entity>(1024, Allocator.Persistent);
-            //parentToChildTree = new NativeHashMap<Entity, NativeList<Entity>>(1024, Allocator.Persistent);
 
             unprocessedTx = GetComponentGroup(typeof(Trunk), typeof(Branch), ComponentType.Subtractive(typeof(HasTips)));
             processedTx = GetComponentGroup(typeof(Trunk), typeof(Branch), typeof(Hash), typeof(HasTips));
@@ -41,16 +39,17 @@ namespace uIota
         {
             [ReadOnly] [DeallocateOnJobCompletion]
             public NativeArray<ArchetypeChunk> chunks;
-            [ReadOnly] public ArchetypeChunkBufferType<Trunk> trunkType;
-            [ReadOnly] public ArchetypeChunkBufferType<Branch> branchType;
+            [ReadOnly] public ArchetypeChunkComponentType<Trunk> trunkType;
+            [ReadOnly] public ArchetypeChunkComponentType<Branch> branchType;
             [ReadOnly] public ArchetypeChunkEntityType entityType;
 
             [ReadOnly] public BufferArray<Hash> processedHashes;
             [ReadOnly] public EntityArray processedEntities;
 
             public NativeMultiHashMap<Entity, Entity> parentToChildTree;
-            //public NativeHashMap<Entity, NativeList<Entity>> parentToChildTree;
             [ReadOnly] public Entity treeRoot;
+
+            public EntityCommandBuffer.Concurrent buffer;
 
             //public void Execute(int index)
             //{
@@ -61,8 +60,8 @@ namespace uIota
                 for(var index = 0; index < chunks.Length; index++)
                 {
                     var chunk = chunks[index];
-                    var trunksAccessor = chunk.GetBufferAccessor(trunkType);
-                    var branchesAccessor = chunk.GetBufferAccessor(branchType);
+                    var trunksAccessor = chunk.GetNativeArray(trunkType);
+                    var branchesAccessor = chunk.GetNativeArray(branchType);
                     var entities = chunk.GetNativeArray(entityType);
 
                     //var rnd = new Unity.Mathematics.Random((uint)(index + 1));
@@ -75,47 +74,30 @@ namespace uIota
                         var childEntity = entities[i];
 
                         NativeMultiHashMapIterator<Entity> iterator;
-                        Entity trunkParent = treeRoot;
-                        Entity branchParent = treeRoot;
                         NativeList<Entity> walkChildren;
 
+                        Entity trunkParent = treeRoot;
                         while (parentToChildTree.TryGetValues(trunkParent, out walkChildren, out iterator))
                         {
                             trunkParent = walkChildren[rnd.NextInt(0, walkChildren.Length)];
                             walkChildren.Dispose();
                         }
-                        //trunkParent = walkChildren[rnd.NextInt(0, walkChildren.Length)];
+                        //UnityEngine.Debug.Log(childEntity.Index + " " + trunkParent.Index);
                         walkChildren.Dispose();
-                        var nextIndex = 0;
-                        for(var j = 0; j < processedEntities.Length; j++)
-                        {
-                            nextIndex = j;
-                            if(trunkParent == processedEntities[j]) { break; }
-                        }
-                        var hashBuffer = processedHashes[nextIndex];
-                        var parentEntity = processedEntities[nextIndex];
-                        trunkBuffer.Clear();
-                        trunkBuffer.CopyFrom(hashBuffer.Reinterpret<Trunk>().ToNativeArray());
-                        parentToChildTree.Add(parentEntity, childEntity);
+                        buffer.SetComponent(i, childEntity, new Trunk { Value = trunkParent });
 
+                        Entity branchParent = treeRoot;
                         while (parentToChildTree.TryGetValues(branchParent, out walkChildren, out iterator))
                         {
                             branchParent = walkChildren[rnd.NextInt(0, walkChildren.Length)];
                             walkChildren.Dispose();
                         }
-                        //branchParent = walkChildren[rnd.NextInt(0, walkChildren.Length)];
+                        //UnityEngine.Debug.Log(childEntity.Index + " " + branchParent.Index);
                         walkChildren.Dispose();
-                        nextIndex = 0;
-                        for (var j = 0; j < processedEntities.Length; j++)
-                        {
-                            nextIndex = j;
-                            if (branchParent == processedEntities[j]) { break; }
-                        }
-                        hashBuffer = processedHashes[nextIndex];
-                        parentEntity = processedEntities[nextIndex];
-                        branchBuffer.Clear();
-                        branchBuffer.CopyFrom(hashBuffer.Reinterpret<Branch>().ToNativeArray());
-                        parentToChildTree.Add(parentEntity, childEntity);
+                        buffer.SetComponent(i, childEntity, new Branch { Value = branchParent });
+
+                        parentToChildTree.Add(trunkParent, childEntity);
+                        parentToChildTree.Add(branchParent, childEntity);
                     }
                 }
             }
@@ -145,13 +127,14 @@ namespace uIota
             var job = new GetTipsJob()
             {
                 chunks = chunks,
-                trunkType = GetArchetypeChunkBufferType<Trunk>(),
-                branchType = GetArchetypeChunkBufferType<Branch>(),
+                trunkType = GetArchetypeChunkComponentType<Trunk>(),
+                branchType = GetArchetypeChunkComponentType<Branch>(),
                 entityType = GetArchetypeChunkEntityType(),
                 processedHashes = processedHashes,
                 processedEntities = processedTx.GetEntityArray(),
                 parentToChildTree = parentToChildTree,
-                treeRoot = processedTx.GetEntityArray()[0] //HACK + UNSAFE - set the tree root to 'genesis'
+                treeRoot = processedTx.GetEntityArray()[0], //HACK + UNSAFE - set the tree root to 'genesis'
+                buffer = barrier.CreateCommandBuffer().ToConcurrent()
             };
             //var getTipsHandle = job.Schedule(chunks.Length, 32);
             var getTipsHandle = job.Schedule(inputDeps);

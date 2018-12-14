@@ -32,8 +32,12 @@ namespace uIota
             EntityManager.AddComponent(genesis, typeof(TimeStamps));
             EntityManager.SetComponentData(genesis, timeStamps);
 
-            EntityManager.AddBuffer<Trunk>(genesis);
-            EntityManager.AddBuffer<Branch>(genesis);
+            //EntityManager.AddBuffer<Trunk>(genesis);
+            //EntityManager.AddBuffer<Branch>(genesis);
+            EntityManager.AddComponent(genesis, typeof(Trunk));
+            EntityManager.SetComponentData(genesis, new Trunk { Value = genesis });
+            EntityManager.AddComponent(genesis, typeof(Branch));
+            EntityManager.SetComponentData(genesis, new Branch { Value = genesis });
             EntityManager.AddComponent(genesis, typeof(Weight));
             EntityManager.SetComponentData(genesis, new Weight() { Value = 1 });
             EntityManager.AddComponent(genesis, typeof(HasTips));
@@ -93,8 +97,10 @@ namespace uIota
             EntityManager.AddComponent(entity, typeof(Weight));
             EntityManager.SetComponentData(entity, new Weight() { Value = 1 });
 
-            EntityManager.AddBuffer<Trunk>(entity);
-            EntityManager.AddBuffer<Branch>(entity);
+            //EntityManager.AddBuffer<Trunk>(entity);
+            //EntityManager.AddBuffer<Branch>(entity);
+            EntityManager.AddComponent(entity, typeof(Trunk));
+            EntityManager.AddComponent(entity, typeof(Branch));
             return entity;
         }
 

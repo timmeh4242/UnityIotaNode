@@ -1,5 +1,7 @@
 ﻿using Unity.Entities;
 using Unity.Collections;
+using Unity.Transforms;
+using Unity.Mathematics;
 
 namespace uIota
 {
@@ -17,12 +19,23 @@ namespace uIota
         //ArchetypeChunkBufferType<Branch> branchChunkType;
         //ArchetypeChunkComponentType<TimeStamps> timeStampChunkType;
 
+        NativeHashMap<Entity, float3> txToPositions;
+
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
 
             addedTx = GetComponentGroup(typeof(TimeStamps), typeof(Hash), typeof(Trunk), typeof(Branch),typeof(HasTips), ComponentType.Subtractive(typeof(Initialized)));
             //removedTx = GetComponentGroup(typeof(TimeStamps), typeof(Initialized));
+
+            txToPositions = new NativeHashMap<Entity, float3>(1024, Allocator.Persistent);
+        }
+
+        protected override void OnDestroyManager()
+        {
+            base.OnDestroyManager();
+
+            txToPositions.Dispose();
         }
 
         struct Initialized : ISystemStateComponentData { }
@@ -38,8 +51,8 @@ namespace uIota
 
             var entityChunkType = GetArchetypeChunkEntityType();
             var hashChunkType = GetArchetypeChunkBufferType<Hash>();
-            var trunkChunkType = GetArchetypeChunkBufferType<Trunk>();
-            var branchChunkType = GetArchetypeChunkBufferType<Branch>();
+            var trunkChunkType = GetArchetypeChunkComponentType<Trunk>();
+            var branchChunkType = GetArchetypeChunkComponentType<Branch>();
             var timeStampChunkType = GetArchetypeChunkComponentType<TimeStamps>();
 
             var commandBuffer = barrier.CreateCommandBuffer();
@@ -49,45 +62,45 @@ namespace uIota
                 var chunk = chunks[i];
                 var entities = chunk.GetNativeArray(entityChunkType);
                 var hashes = chunk.GetBufferAccessor(hashChunkType);
-                var trunks = chunk.GetBufferAccessor(trunkChunkType);
-                var branches = chunk.GetBufferAccessor(branchChunkType);
+                var trunks = chunk.GetNativeArray(trunkChunkType);
+                var branches = chunk.GetNativeArray(branchChunkType);
                 var timeStamps = chunk.GetNativeArray(timeStampChunkType);
+
                 for (var j = 0; j < chunk.Count; j++)
                 {
-                    var go = UnityEngine.GameObject.Instantiate(AppManager.TransactionPrefab);
+                    commandBuffer.CreateEntity(AppManager.CubeArchetype);
+
                     var yPosition = UnityEngine.Mathf.Lerp((float)-chunk.Count / 2f, (float)chunk.Count / 2f, (float)j / (float)chunk.Count) * 2f;
-                    go.transform.position = new UnityEngine.Vector3(timeStamps[j].TimeStamp, yPosition, 0);
-                    var hash = "";
-                    var hashArray = hashes[j];
-                    for (var k = 0; k < hashArray.Length; k++)
-                    { hash += ((int)hashArray[k].Value).ToString(); }
-                    go.name = hash;
+                    var position = new float3(timeStamps[j].TimeStamp, yPosition, 0);
+                    commandBuffer.SetComponent(new Position { Value = position });
+                    commandBuffer.SetSharedComponent(AppManager.TransactionRenderer);
 
-                    if (hash != "999999999")
+                    txToPositions.TryAdd(entities[j], position);
+
+                    float3 trunkPos;
+                    if(txToPositions.TryGetValue(trunks[j].Value, out trunkPos))
                     {
-                        var trunk = "";
-                        var trunkArray = trunks[j];
-                        for (var k = 0; k < trunkArray.Length; k++)
-                        { trunk += ((int)trunkArray[k].Value).ToString(); }
-                        var trunkLineParent = UnityEngine.GameObject.Instantiate(AppManager.TransactionPrefab, go.transform);
-                        var trunkLineRenderer = trunkLineParent.AddComponent<UnityEngine.LineRenderer>();
-                        var trunkGO = UnityEngine.GameObject.Find(trunk);
-                        trunkLineRenderer.SetPosition(0, go.transform.position);
-                        trunkLineRenderer.SetPosition(1, trunkGO.transform.position);
-                        trunkLineRenderer.startWidth = 0.15f;
-                        trunkLineRenderer.endWidth = 0.15f;
+                        var go = new UnityEngine.GameObject();
+                        go.transform.SetParent(AppManager.LineParent);
+                        var line = go.AddComponent<UnityEngine.LineRenderer>();
 
-                        var branch = "";
-                        var branchArray = branches[j];
-                        for (var k = 0; k < branchArray.Length; k++)
-                        { branch += ((int)branchArray[k].Value).ToString(); }
-                        var branchLineParent = UnityEngine.GameObject.Instantiate(AppManager.TransactionPrefab, go.transform);
-                        var branchLineRenderer = branchLineParent.AddComponent<UnityEngine.LineRenderer>();
-                        var branchGO = UnityEngine.GameObject.Find(branch);
-                        branchLineRenderer.SetPosition(0, go.transform.position);
-                        branchLineRenderer.SetPosition(1, branchGO.transform.position);
-                        branchLineRenderer.startWidth = 0.15f;
-                        branchLineRenderer.endWidth = 0.15f;
+                        line.SetPosition(0, position);
+                        line.SetPosition(1, trunkPos);
+                        line.startWidth = 0.15f;
+                        line.endWidth = 0.15f;
+                    }
+
+                    float3 branchPos;
+                    if (txToPositions.TryGetValue(branches[j].Value, out branchPos))
+                    {
+                        var go = new UnityEngine.GameObject();
+                        go.transform.SetParent(AppManager.LineParent);
+                        var line = go.AddComponent<UnityEngine.LineRenderer>();
+
+                        line.SetPosition(0, position);
+                        line.SetPosition(1, branchPos);
+                        line.startWidth = 0.15f;
+                        line.endWidth = 0.15f;
                     }
 
                     commandBuffer.AddComponent(entities[j], new Initialized());

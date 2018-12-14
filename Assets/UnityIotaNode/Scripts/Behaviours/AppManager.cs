@@ -4,6 +4,8 @@ using uIota;
 using System.Collections;
 using System.Security.Cryptography;
 using System.Text;
+using Unity.Transforms;
+using Unity.Rendering;
 
 public class AppManager : MonoBehaviour
 {
@@ -15,7 +17,11 @@ public class AppManager : MonoBehaviour
     public static EntityArchetype ValueTransactionArchetype;
     public static EntityArchetype ZeroValueTransactionArchetype;
 
+    public static EntityArchetype CubeArchetype;
+
     public static GameObject TransactionPrefab;
+    public static MeshInstanceRenderer TransactionRenderer;
+    public static Transform LineParent;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void Initialize()
@@ -73,6 +79,21 @@ public class AppManager : MonoBehaviour
             typeof(Nonce)
         );
 
-        TransactionPrefab = Resources.Load<GameObject>("TransactionPrefab");
+        CubeArchetype = World.Active.GetOrCreateManager<EntityManager>().CreateArchetype
+        (
+            typeof(Position),
+            typeof(Rotation),
+            typeof(MeshInstanceRenderer)
+        );
+
+        TransactionPrefab = Resources.Load<GameObject>("TransactionPrefab_BACKUP");
+        TransactionRenderer = TransactionPrefab.GetComponent<MeshInstanceRendererComponent>().Value;
+        LineParent = new GameObject().transform;
+        LineParent.name = "LineParent";
+    }
+
+    private void Awake()
+    {
+        LineParent.SetParent(this.transform);
     }
 }
