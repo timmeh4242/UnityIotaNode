@@ -2,6 +2,7 @@
 using Unity.Collections;
 using Unity.Transforms;
 using Unity.Mathematics;
+using E7.ECS.LineRenderer;
 
 namespace uIota
 {
@@ -80,27 +81,21 @@ namespace uIota
                     float3 trunkPos;
                     if(txToPositions.TryGetValue(trunks[j].Value, out trunkPos))
                     {
-                        var go = new UnityEngine.GameObject();
-                        go.transform.SetParent(AppManager.LineParent);
-                        var line = go.AddComponent<UnityEngine.LineRenderer>();
-
-                        line.SetPosition(0, position);
-                        line.SetPosition(1, trunkPos);
-                        line.startWidth = 0.15f;
-                        line.endWidth = 0.15f;
+                        commandBuffer.CreateEntity();
+                        var lineSegment = new LineSegment { from = position, to = trunkPos, lineWidth = 0.15f };
+                        commandBuffer.AddComponent(lineSegment);
+                        var lineStyle = new LineStyle { lineMaterial = AppManager.TransactionRenderer.material };
+                        commandBuffer.AddSharedComponent(lineStyle);
                     }
 
                     float3 branchPos;
                     if (txToPositions.TryGetValue(branches[j].Value, out branchPos))
                     {
-                        var go = new UnityEngine.GameObject();
-                        go.transform.SetParent(AppManager.LineParent);
-                        var line = go.AddComponent<UnityEngine.LineRenderer>();
-
-                        line.SetPosition(0, position);
-                        line.SetPosition(1, branchPos);
-                        line.startWidth = 0.15f;
-                        line.endWidth = 0.15f;
+                        commandBuffer.CreateEntity();
+                        var lineSegment = new LineSegment { from = position, to = branchPos, lineWidth = 0.15f };
+                        commandBuffer.AddComponent(lineSegment);
+                        var lineStyle = new LineStyle { lineMaterial = AppManager.TransactionRenderer.material };
+                        commandBuffer.AddSharedComponent(lineStyle);
                     }
 
                     commandBuffer.AddComponent(entities[j], new Initialized());

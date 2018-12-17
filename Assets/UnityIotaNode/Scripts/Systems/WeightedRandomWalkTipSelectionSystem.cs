@@ -15,12 +15,14 @@ namespace uIota
         ComponentGroup processedTx;
 
         NativeMultiHashMap<Entity, Entity> parentToChildTree;
+        NativeList<Entity> walkChildren;
 
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
 
             parentToChildTree = new NativeMultiHashMap<Entity, Entity>(1024, Allocator.Persistent);
+            walkChildren = new NativeList<Entity>(Allocator.Persistent);
 
             unprocessedTx = GetComponentGroup(typeof(Trunk), typeof(Branch), ComponentType.Subtractive(typeof(HasTips)));
             processedTx = GetComponentGroup(typeof(Trunk), typeof(Branch), typeof(Hash), typeof(HasTips));
@@ -31,6 +33,7 @@ namespace uIota
             base.OnDestroyManager();
 
             parentToChildTree.Dispose();
+            walkChildren.Dispose();
         }
 
         //[BurstCompile]
@@ -48,6 +51,8 @@ namespace uIota
 
             public NativeMultiHashMap<Entity, Entity> parentToChildTree;
             [ReadOnly] public Entity treeRoot;
+            //[DeallocateOnJobCompletion]
+            public NativeList<Entity> walkChildren;
 
             public EntityCommandBuffer.Concurrent buffer;
 
@@ -74,26 +79,25 @@ namespace uIota
                         var childEntity = entities[i];
 
                         NativeMultiHashMapIterator<Entity> iterator;
-                        NativeList<Entity> walkChildren;
 
                         Entity trunkParent = treeRoot;
-                        while (parentToChildTree.TryGetValues(trunkParent, out walkChildren, out iterator))
+                        while (parentToChildTree.TryGetValues(trunkParent, walkChildren, out iterator))
                         {
                             trunkParent = walkChildren[rnd.NextInt(0, walkChildren.Length)];
-                            walkChildren.Dispose();
+                            walkChildren.Clear();
                         }
                         //UnityEngine.Debug.Log(childEntity.Index + " " + trunkParent.Index);
-                        walkChildren.Dispose();
+                        walkChildren.Clear();
                         buffer.SetComponent(i, childEntity, new Trunk { Value = trunkParent });
 
                         Entity branchParent = treeRoot;
-                        while (parentToChildTree.TryGetValues(branchParent, out walkChildren, out iterator))
+                        while (parentToChildTree.TryGetValues(branchParent, walkChildren, out iterator))
                         {
                             branchParent = walkChildren[rnd.NextInt(0, walkChildren.Length)];
-                            walkChildren.Dispose();
+                            walkChildren.Clear();
                         }
                         //UnityEngine.Debug.Log(childEntity.Index + " " + branchParent.Index);
-                        walkChildren.Dispose();
+                        walkChildren.Clear();
                         buffer.SetComponent(i, childEntity, new Branch { Value = branchParent });
 
                         parentToChildTree.Add(trunkParent, childEntity);
@@ -134,6 +138,7 @@ namespace uIota
                 processedEntities = processedTx.GetEntityArray(),
                 parentToChildTree = parentToChildTree,
                 treeRoot = processedTx.GetEntityArray()[0], //HACK + UNSAFE - set the tree root to 'genesis'
+                walkChildren = walkChildren,
                 buffer = barrier.CreateCommandBuffer().ToConcurrent()
             };
             //var getTipsHandle = job.Schedule(chunks.Length, 32);
